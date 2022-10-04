@@ -1,6 +1,7 @@
 import MathLibrary as Ml
 import pandas as pd
 import numpy as np
+import warnings
 
 
 def function_for_something(input_df):
@@ -14,6 +15,11 @@ def function_for_something(input_df):
     return new_df.to_numpy()
 
 
+def func_x(x, a, b):
+    return b + np.dot(a, x)
+
+
+warnings.filterwarnings('ignore')
 dfp1 = pd.read_excel('p1.xlsx', sheet_name='Лист1', header=None)
 dfp2 = pd.read_excel('p2.xlsx', sheet_name='Лист1', header=None)
 dfc = pd.read_excel('c.xlsx', sheet_name='Лист1', header=None)
@@ -28,10 +34,11 @@ c = c.transpose()
 p = np.zeros([len(p1), len(p1)])
 for i in range(len(p1)):
     a = (p1[i], p2[i])
-    p_itog, F = Ml.solver(c, a, 'max')
-    p[i] = p_itog
+    p_final, F = Ml.solver(c, a, 'max')
+    p[i] = p_final
 q = np.dot(p, c)
 print('q:' + '\n', *q)
+print('P:' + '\n', p)
 df = pd.DataFrame(p)
 # Найдем матрицу ПИ
 dataframe, gates, boxes = Ml.find_boxes(df)
@@ -42,7 +49,14 @@ Pi_matrix = Ml.pi_matrix(dataframe, gates, boxes, LinResult)
 print('Рассчитанная матрица Пи:' + '\n', Pi_matrix)
 
 # найдем r(P) формула в задаче 3.2
-#r_P = copy.deepcopy(Pi_matrix)
-r_P1 = np.dot(Pi_matrix, q)
-print('r(P):' + '\n', *r_P1)
-# Ml.ergo_solver('PrimerAV.xlsx')
+r_P = np.dot(Pi_matrix, q)
+print('r(P):' + '\n', *r_P, '\n')
+# Найдем W1
+print(np.eye(len(p))-p+Pi_matrix, '\n')
+B = np.linalg.inv(np.eye(len(p))-p+Pi_matrix)
+W1 = np.dot(B, q)-r_P
+print('W1:' + '\n', *W1, '\n')
+F = func_x(p, [r_P.transpose(), W1.transpose()], [r_P, q-r_P-W1])
+print('F:' + '\n', F[0], '\n')
+for f in F[1]: print(*f, sep='\t')
+
