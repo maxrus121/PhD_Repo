@@ -36,7 +36,7 @@ def gauss(a, b):
     return [a, b]
 
 
-df = pd.read_excel('Gauss.xlsx', header=None)
+df = pd.read_excel('Gauss.xlsx', sheet_name='Лист1', header=None)
 A = df.to_numpy()[:, :len(df)]
 B = df.to_numpy()[:, len(df)+1]
 M = gauss(A.tolist(), B.tolist())

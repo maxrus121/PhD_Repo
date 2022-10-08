@@ -145,7 +145,7 @@ def universal_solver(input_data, method):
         print('Решение записано в файл out.csv')
     elif '.xlsx' in input_data:
         # Читаем данные из файла и создаем объект DataFrame
-        data = pd.read_excel('Data.xlsx', engine='openpyxl')
+        data = pd.read_excel('Data.xlsx', sheet_name='Лист1', engine='openpyxl')
         # Используем функцию подготовки данных, для получения списков значений
         C, A1, A2 = prepare_data(data)
         # Дополняем DataFrame столбцом со значениями х-сов полученных из функции solver
@@ -275,9 +275,17 @@ def find_boxes(df):
     return df, ways, bins
 
 
-def ergo_solver(file):
-    # Считываем данные из файла Excel
-    df = pd.read_excel(file, sheet_name='Лист1', header=None)
+def ergo_solver(input_data):
+    if '.xlsx' in input_data:
+        # Считываем данные из файла Excel
+        df = pd.read_excel(input_data, sheet_name='Лист1', header=None)
+    elif isinstance(input_data, pd.DataFrame):
+        df = input_data
+    elif not isinstance(input_data, pd.DataFrame):
+        df = pd.DataFrame(input_data)
+    else:
+        print('Ошибка! Некорректные входные данные.')
+        return None
     dataframe, gates, boxes = find_boxes(df)
     print('Проходные состояния:' + '\n', gates)
     print('Ящики:' + '\n', *boxes)

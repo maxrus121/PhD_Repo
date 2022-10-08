@@ -15,8 +15,8 @@ def function_for_something(input_df):
     return new_df.to_numpy()
 
 
-def func_x(x, a, b):
-    return b + np.dot(a, x)
+def func_x(x, alfa, b):
+    return b + np.dot(alfa, x)
 
 
 warnings.filterwarnings('ignore')
@@ -29,8 +29,7 @@ dfp_count = dfp_count.value_counts().sort_index()
 
 p1 = function_for_something(dfp1)
 p2 = function_for_something(dfp2)
-c = dfc.to_numpy()
-c = c.transpose()
+c = dfc.to_numpy().transpose()
 p = np.zeros([len(p1), len(p1)])
 for i in range(len(p1)):
     a = (p1[i], p2[i])
@@ -59,4 +58,3 @@ print('W1:' + '\n', *W1, '\n')
 F = func_x(p, [r_P.transpose(), W1.transpose()], [r_P, q-r_P-W1])
 print('F:' + '\n', F[0], '\n')
 for f in F[1]: print(*f, sep='\t')
-
