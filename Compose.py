@@ -40,21 +40,21 @@ print('q:' + '\n', *q)
 print('P:' + '\n', p)
 df = pd.DataFrame(p)
 # Найдем матрицу ПИ
-dataframe, gates, boxes = Ml.find_boxes(df)
+gates, boxes = Ml.find_boxes(df)
 print('Проходные состояния:' + '\n', gates)
 print('Ящики:' + '\n', *boxes)
-LinResult = Ml.linear_matrix(dataframe, boxes)
-Pi_matrix = Ml.pi_matrix(dataframe, gates, boxes, LinResult)
+LinResult = Ml.linear_matrix(df, boxes)
+Pi_matrix = Ml.pi_matrix(df, gates, boxes, LinResult)
 print('Рассчитанная матрица Пи:' + '\n', Pi_matrix)
 
 # найдем r(P) формула в задаче 3.2
 r_P = np.dot(Pi_matrix, q)
 print('r(P):' + '\n', *r_P, '\n')
 # Найдем W1
-print(np.eye(len(p))-p+Pi_matrix, '\n')
-B = np.linalg.inv(np.eye(len(p))-p+Pi_matrix)
-W1 = np.dot(B, q)-r_P
+print(np.eye(len(p)) - p + Pi_matrix, '\n')
+B = np.linalg.inv(np.eye(len(p)) - p + Pi_matrix)
+W1 = np.dot(B, q) - r_P
 print('W1:' + '\n', *W1, '\n')
-F = func_x(p, [r_P.transpose(), W1.transpose()], [r_P, q-r_P-W1])
+F = func_x(p, [r_P.transpose(), W1.transpose()], [r_P, q - r_P - W1])
 print('F:' + '\n', F[0], '\n')
 for f in F[1]: print(*f, sep='\t')

@@ -36,9 +36,9 @@ def universal_solver(input_data, method):
         x_final, f_final = solver(input_data[0], input_data[1], method)
         # Печатаем решение в консоль
         print('X =', x_final, ' F max =' if method == 'max' else ' F min =', f_final)
+        return x_final, f_final
     else:
         print('Ошибка! Некорректные входные данные.')
-    return
 
 
 def ergo_solver(input_data):
@@ -49,6 +49,7 @@ def ergo_solver(input_data):
     LinResult = linear_matrix(df, boxes)
     Pi_matrix = pi_matrix(df, gates, boxes, LinResult)
     print('Рассчитанная матрица Пи:' + '\n', Pi_matrix)
+    return Pi_matrix
 
 
 def gauss_solver(input_data):
