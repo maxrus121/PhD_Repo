@@ -4,6 +4,76 @@ import pandas as pd
 import functools
 
 
+def universal_solver(input_data, method):
+    # Объявляем имя столбцов содержащих решение задачи
+    X, F = 'Минимизирующее решение X' if method == 'min' else 'Максимизирующее решение Х', 'Значение  F'
+    if '.csv' in input_data:
+        # Читаем данные из файла и создаем объект DataFrame
+        df = pd.read_csv('in.csv', sep=';')
+        # Используем функцию подготовки данных, для получения списков значений
+        C, A1, A2 = prepare_data(df)
+        # Дополняем DataFrame столбцом со значениями х-сов полученных из функции solver
+        df[X], df[F] = solver(C, [A1, A2], method)
+        df[F][1:] = None
+        # Записываем данные DataFrame в файл csv
+        df.to_csv('out.csv', index=False, sep=';')
+        print('Решение записано в файл out.csv')
+    elif '.xlsx' in input_data:
+        # Читаем данные из файла и создаем объект DataFrame
+        df = pd.read_excel('Data.xlsx', sheet_name='Лист1', engine='openpyxl')
+        # Используем функцию подготовки данных, для получения списков значений
+        C, A1, A2 = prepare_data(df)
+        # Дополняем DataFrame столбцом со значениями х-сов полученных из функции solver
+        df[X], df[F] = solver(C, [A1, A2], method)
+        df[F][1:] = None
+        # Записываем данные DataFrame в исходный файл Excel
+        writer = pd.ExcelWriter('Data.xlsx')
+        df.to_excel(writer, 'Test', index=False)
+        writer.save()
+        print('Решение записано в файл Excel')
+    elif len(input_data) == 2 and len(input_data[0]) == len(input_data[1][0]):
+        # Входные данные передаются напрямую в функцию
+        x_final, f_final = solver(input_data[0], input_data[1], method)
+        # Печатаем решение в консоль
+        print('X =', x_final, ' F max =' if method == 'max' else ' F min =', f_final)
+    else:
+        print('Ошибка! Некорректные входные данные.')
+    return
+
+
+def ergo_solver(input_data):
+    df = input_converter(input_data)
+    gates, boxes = find_boxes(df)
+    print('Проходные состояния:' + '\n', gates)
+    print('Ящики:' + '\n', *boxes)
+    LinResult = linear_matrix(df, boxes)
+    Pi_matrix = pi_matrix(df, gates, boxes, LinResult)
+    print('Рассчитанная матрица Пи:' + '\n', Pi_matrix)
+
+
+def gauss_solver(input_data):
+    df = input_converter(input_data)
+    A = df.to_numpy()[:, :len(df)]
+    B = df.to_numpy()[:, len(df) + 1]
+    M = gauss(A.tolist(), B.tolist())
+    print(np.array(M[0]), np.array(M[1]), sep='\n\n')
+    return np.array(M[0]), np.array(M[1])
+
+
+def input_converter(input_data):
+    if '.xlsx' in input_data:
+        # Считываем данные из файла Excel
+        df = pd.read_excel(input_data, sheet_name='Лист1', header=None)
+    elif isinstance(input_data, pd.DataFrame):
+        df = input_data
+    elif not isinstance(input_data, pd.DataFrame):
+        df = pd.DataFrame(input_data)
+    else:
+        print('Ошибка! Некорректные входные данные.')
+        return None
+    return df
+
+
 def solver(c, a, method):
     sum_a1 = 0
     sum_a2 = 0
@@ -129,43 +199,6 @@ def prepare_data(raw_data):
     return c_raw, a1_raw, a2_raw
 
 
-def universal_solver(input_data, method):
-    # Объявляем имя столбцов содержащих решение задачи
-    X, F = 'Минимизирующее решение X' if method == 'min' else 'Максимизирующее решение Х', 'Значение  F'
-    if '.csv' in input_data:
-        # Читаем данные из файла и создаем объект DataFrame
-        data = pd.read_csv('in.csv', sep=';')
-        # Используем функцию подготовки данных, для получения списков значений
-        C, A1, A2 = prepare_data(data)
-        # Дополняем DataFrame столбцом со значениями х-сов полученных из функции solver
-        data[X], data[F] = solver(C, [A1, A2], method)
-        data[F][1:] = None
-        # Записываем данные DataFrame в файл csv
-        data.to_csv('out.csv', index=False, sep=';')
-        print('Решение записано в файл out.csv')
-    elif '.xlsx' in input_data:
-        # Читаем данные из файла и создаем объект DataFrame
-        data = pd.read_excel('Data.xlsx', sheet_name='Лист1', engine='openpyxl')
-        # Используем функцию подготовки данных, для получения списков значений
-        C, A1, A2 = prepare_data(data)
-        # Дополняем DataFrame столбцом со значениями х-сов полученных из функции solver
-        data[X], data[F] = solver(C, [A1, A2], method)
-        data[F][1:] = None
-        # Записываем данные DataFrame в исходный файл Excel
-        writer = pd.ExcelWriter('Data.xlsx')
-        data.to_excel(writer, 'Test', index=False)
-        writer.save()
-        print('Решение записано в файл Excel')
-    elif len(input_data) == 2 and len(input_data[0]) == len(input_data[1][0]):
-        # Входные данные передаются напрямую в функцию
-        x_final, f_final = solver(input_data[0], input_data[1], method)
-        # Печатаем решение в консоль
-        print('X =', x_final, ' F max =' if method == 'max' else ' F min =', f_final)
-    else:
-        print('Ошибка! Некорректные входные данные.')
-    return
-
-
 def linear_matrix(dataframe, boxes):
     # Решение системы линейных уравнений
     linResult = []
@@ -212,16 +245,16 @@ def pi_matrix(dataframe, gates, boxes, linear_result):
     return result
 
 
-def find_boxes(df):
+def find_boxes(dataframe):
     # Инициализируем списки для переходов и ящиков
     step, box, bins = [], [], []
     # Создаем матрицу, заполненную нулями
-    R = np.zeros((len(df), len(df)))
-    for i in range(len(df)):
+    R = np.zeros((len(dataframe), len(dataframe)))
+    for i in range(len(dataframe)):
         Ri, Rj, R_obj = [], [], []
         step.append(i)
-        for j in range(len(df)):
-            if df[j][i] > 0:
+        for j in range(len(dataframe)):
+            if dataframe[j][i] > 0:
                 Ri.append(j)
         if Ri == [i]:
             # Во всей строке только пересечение с собой получается ящик из одного элемента
@@ -231,23 +264,23 @@ def find_boxes(df):
             # Одиночный ящик исключаем из списка проходных состояний
             step.remove(i)
         for j in Ri:
-            for k in range(len(df)):
-                if df[k][j] > 0:
+            for k in range(len(dataframe)):
+                if dataframe[k][j] > 0:
                     Rj.append(k)
         Ri = Ri + Rj
         for item in Ri:
             if item not in R_obj:
                 R_obj.append(item)
         R_obj.sort()
-        for j in range(int(len(df) - len(R_obj))):
+        for j in range(int(len(dataframe) - len(R_obj))):
             R_obj.append(0)
         R[i] = R_obj
     # print('Получившаяся матрица переходов '+'\n', R)
     # Внутри цикла ищем ящики
     g = np.arange(0, len(R))
-    for i in range(len(df)):
+    for i in range(len(dataframe)):
         case = []
-        for j in range(len(df)):
+        for j in range(len(dataframe)):
             x, y = R[i], R[j]
             if i != j:
                 if functools.reduce(lambda a, b: a and b, map(lambda p, q: p == q, x, y)):
@@ -259,9 +292,9 @@ def find_boxes(df):
                 if k in step:
                     step.remove(k)
     # Вторая итерация поиска ящиков
-    for i in range(len(df)):
+    for i in range(len(dataframe)):
         case = []
-        for j in range(len(df)):
+        for j in range(len(dataframe)):
             x, y = R[i], R[j]
             if functools.reduce(lambda a, b: a and b, map(lambda p, q: p == q, x, y), True):
                 case.append(j+1)
@@ -272,23 +305,38 @@ def find_boxes(df):
         if len(z) > 1 and (z not in bins) and (z[0] not in ways):
             bins.append(z)
             bins.sort()
-    return df, ways, bins
+    return ways, bins
 
 
-def ergo_solver(input_data):
-    if '.xlsx' in input_data:
-        # Считываем данные из файла Excel
-        df = pd.read_excel(input_data, sheet_name='Лист1', header=None)
-    elif isinstance(input_data, pd.DataFrame):
-        df = input_data
-    elif not isinstance(input_data, pd.DataFrame):
-        df = pd.DataFrame(input_data)
-    else:
-        print('Ошибка! Некорректные входные данные.')
-        return None
-    dataframe, gates, boxes = find_boxes(df)
-    print('Проходные состояния:' + '\n', gates)
-    print('Ящики:' + '\n', *boxes)
-    LinResult = linear_matrix(dataframe, boxes)
-    Pi_matrix = pi_matrix(dataframe, gates, boxes, LinResult)
-    print('Рассчитанная матрица Пи:' + '\n', Pi_matrix)
+def swap_rows(a, b, row1, row2):
+    a[row1], a[row2] = a[row2], a[row1]
+    b[row1], b[row2] = b[row2], b[row1]
+
+
+def divide_row(a, b, row, divider):
+    a[row] = [n / divider for n in a[row]]
+    b[row] /= divider
+
+
+def combine_rows(a, b, row, source_row, weight):
+    a[row] = [(n + k * weight) for n, k in zip(a[row], a[source_row])]
+    b[row] += b[source_row] * weight
+
+
+def gauss(a, b):
+    column = 0
+    while column < len(b):
+        current_row = None
+        for r in range(column, len(a)):
+            if current_row is None or abs(a[r][column]) > abs(a[current_row][column]):
+                current_row = r
+        if current_row is None:
+            print("Решений нет")
+            return None
+        if current_row != column:
+            swap_rows(a, b, current_row, column)
+        divide_row(a, b, column, a[column][column])
+        for r in range(column + 1, len(a)):
+            combine_rows(a, b, r, column, -a[r][column])
+        column += 1
+    return [a, b]
