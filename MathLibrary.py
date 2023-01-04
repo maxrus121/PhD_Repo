@@ -53,12 +53,19 @@ def ergo_solver(input_data):
 
 
 def gauss_solver(input_data):
+    # Считывание и распознавание данных
     df = input_converter(input_data)
+    # Преобразование из DataFrame в массив
     A = df.to_numpy()[:, :len(df)]
-    B = df.to_numpy()[:, len(df) + 1]
-    M = gauss(A.tolist(), B.tolist())
-    print(np.array(M[0]), np.array(M[1]), sep='\n\n')
-    return np.array(M[0]), np.array(M[1])
+    #B = df.to_numpy()[:, len(df) + 1]
+    # Запуск основной функции расчета
+    #M = gauss_right(A.tolist(), B.tolist())
+    M = gauss(A.tolist())
+    #print(np.array(M[0]), np.array(M[1]), sep='\n\n')
+    print(np.array(M[0]))
+    # Отправляем на выход обработанную матрицу и вектор значений
+    #return np.array(M[0]), np.array(M[1])
+    return np.array(M[0])
 
 
 def input_converter(input_data):
@@ -309,24 +316,57 @@ def find_boxes(dataframe):
     return ways, bins
 
 
-def swap_rows(a, b, row1, row2):
+def swap_rows_right(a, b, row1, row2):
     a[row1], a[row2] = a[row2], a[row1]
     b[row1], b[row2] = b[row2], b[row1]
 
 
-def divide_row(a, b, row, divider):
+def divide_row_right(a, b, row, divider):
     a[row] = [n / divider for n in a[row]]
     b[row] /= divider
 
 
-def combine_rows(a, b, row, source_row, weight):
+def combine_rows_right(a, b, row, source_row, weight):
     a[row] = [(n + k * weight) for n, k in zip(a[row], a[source_row])]
     b[row] += b[source_row] * weight
 
 
-def gauss(a, b):
+def gauss_right(a, b):
     column = 0
+    # Проход по всем строкам
     while column < len(b):
+        current_row = None
+        for r in range(column, len(a)):
+            if current_row is None or abs(a[r][column]) > abs(a[current_row][column]):
+                current_row = r
+        # Проверка случая когда входные данные пустые
+        if current_row is None:
+            print("Решений нет")
+            return None
+        if current_row != column:
+            swap_rows_right(a, b, current_row, column)
+        divide_row_right(a, b, column, a[column][column])
+        for r in range(column + 1, len(a)):
+            combine_rows_right(a, b, r, column, -a[r][column])
+        column += 1
+    return [a, b]
+
+
+def swap_rows(a, row1, row2):
+    a[row1], a[row2] = a[row2], a[row1]
+
+
+def divide_row(a, row, divider):
+    a[row] = [n / divider for n in a[row]]
+
+
+def combine_rows(a, row, source_row, weight):
+    a[row] = [(n + k * weight) for n, k in zip(a[row], a[source_row])]
+
+
+def gauss(a):
+    column = 0
+    while column < len(a):
         current_row = None
         for r in range(column, len(a)):
             if current_row is None or abs(a[r][column]) > abs(a[current_row][column]):
@@ -335,9 +375,9 @@ def gauss(a, b):
             print("Решений нет")
             return None
         if current_row != column:
-            swap_rows(a, b, current_row, column)
-        divide_row(a, b, column, a[column][column])
+            swap_rows(a, current_row, column)
+        divide_row(a, column, a[column][column])
         for r in range(column + 1, len(a)):
-            combine_rows(a, b, r, column, -a[r][column])
+            combine_rows(a, r, column, -a[r][column])
         column += 1
-    return [a, b]
+    return [a]
