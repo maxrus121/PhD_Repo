@@ -155,3 +155,7 @@ print_ndarray(Alfa)
 y3 = X[2] + Alfa[2][1] * X[1] + Alfa[2][0] * X[0]
 print(y3)
 print(Y[2])
+Y_final = np.zeros([len(Y), len(Y)])
+for i in range(len(Y)):
+    Y_final[i][i] = np.linalg.norm(Y[i])
+print_ndarray(Y_final)
