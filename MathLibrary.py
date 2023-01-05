@@ -4,6 +4,33 @@ import pandas as pd
 import functools
 
 
+'''
+Список основных функций в библиотеке:
+universal_solver - Функция для решения задачи линейного программирования
+ergo_solver - Функция, решающая задачу нахождения ящиков в матрице состояний и генерирующая Пи матрицу
+gauss_solver - Функция, приводящая матрицу к треугольному виду
+gauss_right_solver - Функция, приводящая матрицу к треугольному виду с учетом правой части
+
+Список вспомогательных функций в библиотеке:
+input_converter - Преобразование Excel файла или чистых данных в Dataframe
+solver - Расчет задачи линейного программирования
+heapify - Создание дерева индексов для сортировки
+heap_sort - Сортировка
+prepare_data - Преобразование данных для задачи линейного программирования
+linear_matrix - Решение системы линейных уравнений
+pi_matrix - Расчет матрицы Пи
+swap_rows - Изменение позиций строк 
+divide_row - Деление строк 
+combine_rows - Соединение строк 
+gauss - Создание треугольной матрицы 
+find_boxes - Нахождение ящиков и проходов в матрице состояний
+swap_rows_right - Изменение позиций строк с учетом правой части
+divide_row_right - Деление строк с учетом правой части
+combine_rows_right - Соединение строк с учетом правой части
+gauss_right - Создание треугольной матрицы с учетом правой части
+'''
+
+
 def universal_solver(input_data, method):
     # Объявляем имя столбцов содержащих решение задачи
     X, F = 'Минимизирующее решение X' if method == 'min' else 'Максимизирующее решение Х', 'Значение  F'
@@ -66,6 +93,15 @@ def gauss_solver(input_data):
     # Отправляем на выход обработанную матрицу и вектор значений
     #return np.array(M[0]), np.array(M[1])
     return np.array(M[0])
+
+
+def gauss_right_solver(input_data):
+    df = input_converter(input_data)
+    A = df.to_numpy()[:, :len(df)]
+    B = df.to_numpy()[:, len(df) + 1]
+    M = gauss_right(A.tolist(), B.tolist())
+    print(np.array(M[0]), np.array(M[1]), sep='\n\n')
+    return np.array(M[0]), np.array(M[1])
 
 
 def input_converter(input_data):
@@ -152,7 +188,7 @@ def solver(c, a, method):
             # Обратная пирамидальная сортировка
             heap_sort(copy.deepcopy(r[1]), r)
     # Производим округление результата, что бы избежать проблемы цифрового нуля
-    x = np.around(r[4], 2)
+    x = np.around(r[4], 4)
     # Находим значение целевой функции
     f = (c * x).sum()
     return x, f
@@ -249,7 +285,7 @@ def pi_matrix(dataframe, gates, boxes, linear_result):
     answer = np.linalg.solve(left, right)
     for i in range(len(gates)):
         matrix_PI[gates[i] - 1] = answer[i]
-    result = (np.around(matrix_PI, 2))
+    result = (np.around(matrix_PI, 4))
     return result
 
 
@@ -268,7 +304,7 @@ def find_boxes(dataframe):
             # Во всей строке только пересечение с собой получается ящик из одного элемента
             print(i, '= Bad')
             # Одиночный ящик добавляем в финальный ответ
-            bins.append([i+1])
+            bins.append([i + 1])
             # Одиночный ящик исключаем из списка проходных состояний
             step.remove(i)
         for j in Ri:
@@ -305,7 +341,7 @@ def find_boxes(dataframe):
         for j in range(len(dataframe)):
             x, y = R[i], R[j]
             if functools.reduce(lambda a, b: a and b, map(lambda p, q: p == q, x, y), True):
-                case.append(j+1)
+                case.append(j + 1)
         box.append(case)
     ways = [h + 1 for h in step]
     # Исключаем из списка ящиков повторения и проходные состояния
@@ -322,8 +358,10 @@ def swap_rows_right(a, b, row1, row2):
 
 
 def divide_row_right(a, b, row, divider):
-    a[row] = [n / divider for n in a[row]]
-    b[row] /= divider
+    # Деление создающее единицы на главной диагонали отключено
+    #a[row] = [n / divider for n in a[row]]
+    #b[row] /= divider
+    a[row] = [n for n in a[row]]
 
 
 def combine_rows_right(a, b, row, source_row, weight):
@@ -357,7 +395,9 @@ def swap_rows(a, row1, row2):
 
 
 def divide_row(a, row, divider):
-    a[row] = [n / divider for n in a[row]]
+    # Деление создающее единицы на главной диагонали отключено
+    #a[row] = [n / divider for n in a[row]]
+    a[row] = [n for n in a[row]]
 
 
 def combine_rows(a, row, source_row, weight):
@@ -381,3 +421,33 @@ def gauss(a):
             combine_rows(a, r, column, -a[r][column])
         column += 1
     return [a]
+
+
+def gauss_a(a):
+    for k in range(len(a) - 1):
+        At = a.copy()
+        for i in range(len(a)):
+            for j in range(len(a)):
+                if i <= k:
+                    a[i][j] = At[i][j]
+                elif i > k and j > k:
+                    a[i][j] = round(At[i][j] - (At[i][k] / At[k][k]) * At[k][j], 4)
+                elif i > k >= j:
+                    a[i][j] = 0
+    return a
+
+
+def ort(x):
+    a = np.zeros([len(x), len(x)])
+    Fi = np.zeros([len(x), len(x)])
+    y = np.zeros([len(x), len(x)])
+    for i in range(len(x)):
+        a[i][i] = 1
+        for j in range(i):
+            Fi[i][j] = -(np.dot(x[i], y[j]) / np.dot(y[j], y[j]))
+            for k in range(i):
+                a[i][j] += - a[k][j] * Fi[i][k]
+            y[i] += np.dot(a[i][j], y[j])
+        if i == 0:
+            y[i] = x[0]
+    return a, y, Fi

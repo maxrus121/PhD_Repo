@@ -19,10 +19,11 @@ def func_x(x, alfa, b):
     return b + np.dot(alfa, x)
 
 
-def generate_w(b, pi, qu, number):
+def calculate_w(b, pi, qu, number):
     w = np.zeros([number, len(qu)])
-    w[0] = np.dot(b - pi, qu).T
-    for k in range(1, number):
+    w[0] = np.dot(pi, qu).T
+    w[1] = np.dot(b - pi, qu).T
+    for k in range(2, number):
         w[k] = np.dot(-b, w[k - 1]).T
     return w
 
@@ -49,6 +50,14 @@ def gamma(xn, yn):
     return np.dot(xn, yn) / np.dot(yn, yn)
 
 
+def print_ndarray(m):
+    for line in m:
+        for element in line:
+            #print(f"{element:.8f}", end=' ')
+            print(element, end=' ')
+        print()
+
+
 warnings.filterwarnings('ignore')
 dfp1 = pd.read_excel('p1.xlsx', sheet_name='Лист1', header=None)
 dfp2 = pd.read_excel('p2.xlsx', sheet_name='Лист1', header=None)
@@ -66,7 +75,17 @@ for i in range(len(p1)):
     p_final, F = Ml.solver(c, a, 'max')
     p[i] = p_final
 q = np.dot(p, c)
+# Преобразование из двумерного массива в вектор
+q = np.array([a for b in q for a in b])
+'''p = [[0.1, 0.2, 0.3, 0., 0., 0.4],
+     [0.3, 0.3, 0., 0.1, 0.3, 0.],
+     [0., 0., 0.4, 0.6, 0., 0.],
+     [0., 0., 0.5, 0.5, 0., 0.],
+     [0., 0., 0., 0., 0.3, 0.7],
+     [0., 0., 0., 0., 0.4, 0.6]]
+q = [60, 50, 40, 30, 20, 10]'''
 print('q:' + '\n', *q)
+print(q)
 print('P:' + '\n', p)
 df = pd.DataFrame(p)
 # Найдем матрицу ПИ
@@ -77,47 +96,55 @@ LinResult = Ml.linear_matrix(df, boxes)
 Pi_matrix = Ml.pi_matrix(df, gates, boxes, LinResult)
 print('Рассчитанная матрица Пи:' + '\n', Pi_matrix)
 
-# Найдем W1
+# Найдем W
 B = np.linalg.inv(np.eye(len(p)) - p + Pi_matrix)
 print('B:' + '\n', B, '\n')
-W1 = np.dot(B - Pi_matrix, q)
-W2 = np.dot(-B, W1)
+W1 = np.dot(Pi_matrix, q)
+W2 = np.dot(B - Pi_matrix, q)
 W3 = np.dot(-B, W2)
 W4 = np.dot(-B, W3)
-X = generate_w(B, Pi_matrix, q, 4)
-print('W:' + '\n', *W1)
-print(*W2)
-print(*W3)
-print(*W4, '\n')
+W5 = np.dot(-B, W4)
+W6 = np.dot(-B, W5)
+X = calculate_w(B, Pi_matrix, q, len(p))
+print('W:')
+print_ndarray([W1, W2, W3, W4, W5, W6])
+print()
+X1, X2, X3, X4, X5, X6 = W1, W2, W3, W4, W5, W6
 print('X:')
 for elem in X: print(*elem)
 print()
-# Так W1 представляет собой двумерный массив, мы преобразовываем его вначале в одномерный и затем в формат array
-X1 = np.array([a for b in W1 for a in b])
-X2 = np.array([a for b in W2 for a in b])
-X3 = np.array([a for b in W3 for a in b])
-X4 = np.array([a for b in W4 for a in b])
 y1 = X1
 y2 = X2 - y1 * gamma(X2, y1)
-y3 = X3 - X1 * gamma(X3, y1) - y2 * gamma(X3, y2)
+y3 = X3 - y1 * gamma(X3, y1) - y2 * gamma(X3, y2)
 y4 = X4 - y1 * gamma(X4, y1) - y2 * gamma(X4, y2) - y3 * gamma(X4, y3)
+y5 = X5 - y1 * gamma(X5, y1) - y2 * gamma(X5, y2) - y3 * gamma(X5, y3) - y4 * gamma(X5, y4)
+y6 = X6 - y1 * gamma(X6, y1) - y2 * gamma(X6, y2) - y3 * gamma(X6, y3) - y4 * gamma(X6, y4) - y5 * gamma(X6, y5)
 print('Y_manual:' + '\n', *y1)
 print(*y2)
 print(*y3)
-print(*y4, '\n')
-Y = calculate_y(X, 4)
-#print('Y:', *Y, sep='\n')
+print(*y4)
+print(*y5)
+print(*y6, '\n')
+Y = calculate_y(X, len(p))
 print('Y_calculated')
 for elem in Y: print(*elem)
 print()
-a1 = [1, 0, 0, 0]
-a2 = [- gamma(X2, y1), 1, 0, 0]
-a3 = [- gamma(X3, y1) - a2[0] * gamma(X3, y2), - gamma(X3, y2), 1, 0]
+a1 = [1, 0, 0, 0, 0, 0]
+a2 = [- gamma(X2, y1), 1, 0, 0, 0, 0]
+a3 = [- gamma(X3, y1) - a2[0] * gamma(X3, y2), - gamma(X3, y2), 1, 0, 0, 0]
 a4 = [- gamma(X4, y1) - a2[0] * gamma(X4, y2) - a3[0] * gamma(X4, y3), - gamma(X4, y2) - a3[1] * gamma(X4, y3),
-      - gamma(X4, y3), 1]
+      - gamma(X4, y3), 1, 0, 0]
+a5 = [- gamma(X5, y1) - a2[0] * gamma(X5, y2) - a3[0] * gamma(X5, y3) - a4[0] * gamma(X5, y4), - gamma(X5, y2)
+      - a3[1] * gamma(X5, y3) - a4[1] * gamma(X5, y4), - gamma(X5, y3) - a4[2] * gamma(X5, y4), - gamma(X5, y4), 1, 0]
+a6 = [- gamma(X6, y1) - a2[0] * gamma(X6, y2) - a3[0] * gamma(X6, y3) - a4[0] * gamma(X6, y4) - a5[0] * gamma(X6, y5),
+      - gamma(X6, y2) - a3[1] * gamma(X6, y3) - a4[1] * gamma(X6, y4) - a5[1] * gamma(X6, y5), - gamma(X6, y3)
+      - a4[2] * gamma(X6, y4) - a5[2] * gamma(X6, y5), - gamma(X6, y4) - a5[3] * gamma(X6, y5), - gamma(X6, y5), 1]
 print('Alfa_manual:' + '\n', *a1)
 print(*a2)
 print(*a3)
-print(*a4, '\n')
+print(*a4)
+print(*a5)
+print(*a6, '\n')
 Alfa = calculate_alfa(X, Y)
-print('Alfa_calculated:' + '\n', Alfa)
+print('Alfa_calculated:')
+print_ndarray(Alfa)
