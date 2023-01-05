@@ -74,9 +74,9 @@ for i in range(len(p1)):
     a = (p1[i], p2[i])
     p_final, F = Ml.solver(c, a, 'max')
     p[i] = p_final
-q = np.dot(p, c)
+#q = np.dot(p, c)
 # Преобразование из двумерного массива в вектор
-q = np.array([a for b in q for a in b])
+#q = np.array([a for b in q for a in b])
 p = [[0.1, 0.2, 0.3, 0., 0., 0.4],
      [0.3, 0.3, 0., 0.1, 0.3, 0.],
      [0., 0., 0.4, 0.6, 0., 0.],
@@ -98,7 +98,7 @@ print('Рассчитанная матрица Пи:' + '\n', Pi_matrix)
 # Найдем W
 B = np.linalg.inv(np.eye(len(p)) - p + Pi_matrix)
 print('B:' + '\n', B, '\n')
-W1 = np.dot(Pi_matrix, q)
+'''W1 = np.dot(Pi_matrix, q)
 W2 = np.dot(B - Pi_matrix, q)
 W3 = np.dot(-B, W2)
 W4 = np.dot(-B, W3)
@@ -107,15 +107,15 @@ W6 = np.dot(-B, W5)
 W_New = [W1, W2, W3, W4, W5, W6]
 W_New = np.array(W_New)
 W_New = W_New.T
-X = calculate_w(B, Pi_matrix, q)
-X = X.T
 print('W:')
 print_ndarray(W_New)
-print()
-X1, X2, X3, X4, X5, X6 = W_New[0], W_New[1], W_New[2], W_New[3], W_New[4], W_New[5]
+print()'''
+X = calculate_w(B, Pi_matrix, q)
+X = X.T
 print('X:')
 for elem in X: print(*elem)
 print()
+'''X1, X2, X3, X4, X5, X6 = W_New[0], W_New[1], W_New[2], W_New[3], W_New[4], W_New[5]
 y1 = X1
 y2 = X2 - y1 * gamma(X2, y1)
 y3 = X3 - y1 * gamma(X3, y1) - y2 * gamma(X3, y2)
@@ -127,12 +127,12 @@ print(*y2)
 print(*y3)
 print(*y4)
 print(*y5)
-print(*y6, '\n')
+print(*y6, '\n')'''
 Y = calculate_y(X)
 print('Y_calculated')
 for elem in Y: print(*elem)
 print()
-a1 = [1, 0, 0, 0, 0, 0]
+'''a1 = [1, 0, 0, 0, 0, 0]
 a2 = [- gamma(X2, y1), 1, 0, 0, 0, 0]
 a3 = [- gamma(X3, y1) - a2[0] * gamma(X3, y2), - gamma(X3, y2), 1, 0, 0, 0]
 a4 = [- gamma(X4, y1) - a2[0] * gamma(X4, y2) - a3[0] * gamma(X4, y3), - gamma(X4, y2) - a3[1] * gamma(X4, y3),
@@ -147,7 +147,7 @@ print(*a2)
 print(*a3)
 print(*a4)
 print(*a5)
-print(*a6, '\n')
+print(*a6, '\n')'''
 Alfa = calculate_alfa(X, Y)
 print('Alfa_calculated:')
 print_ndarray(Alfa)
