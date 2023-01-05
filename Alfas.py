@@ -77,15 +77,14 @@ for i in range(len(p1)):
 q = np.dot(p, c)
 # Преобразование из двумерного массива в вектор
 q = np.array([a for b in q for a in b])
-'''p = [[0.1, 0.2, 0.3, 0., 0., 0.4],
+p = [[0.1, 0.2, 0.3, 0., 0., 0.4],
      [0.3, 0.3, 0., 0.1, 0.3, 0.],
      [0., 0., 0.4, 0.6, 0., 0.],
      [0., 0., 0.5, 0.5, 0., 0.],
      [0., 0., 0., 0., 0.3, 0.7],
      [0., 0., 0., 0., 0.4, 0.6]]
-q = [60, 50, 40, 30, 20, 10]'''
+q = [60, 50, 40, 30, 20, 10]
 print('q:' + '\n', *q)
-print(q)
 print('P:' + '\n', p)
 df = pd.DataFrame(p)
 # Найдем матрицу ПИ
@@ -105,11 +104,15 @@ W3 = np.dot(-B, W2)
 W4 = np.dot(-B, W3)
 W5 = np.dot(-B, W4)
 W6 = np.dot(-B, W5)
+W_New = [W1, W2, W3, W4, W5, W6]
+W_New = np.array(W_New)
+W_New = W_New.T
 X = calculate_w(B, Pi_matrix, q)
+X = X.T
 print('W:')
-print_ndarray([W1, W2, W3, W4, W5, W6])
+print_ndarray(W_New)
 print()
-X1, X2, X3, X4, X5, X6 = W1, W2, W3, W4, W5, W6
+X1, X2, X3, X4, X5, X6 = W_New[0], W_New[1], W_New[2], W_New[3], W_New[4], W_New[5]
 print('X:')
 for elem in X: print(*elem)
 print()
@@ -148,3 +151,7 @@ print(*a6, '\n')
 Alfa = calculate_alfa(X, Y)
 print('Alfa_calculated:')
 print_ndarray(Alfa)
+
+y3 = X[2] + Alfa[2][1] * X[1] + Alfa[2][0] * X[0]
+print(y3)
+print(Y[2])
