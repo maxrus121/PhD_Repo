@@ -19,18 +19,18 @@ def func_x(x, alfa, b):
     return b + np.dot(alfa, x)
 
 
-def calculate_w(b, pi, qu, number):
-    w = np.zeros([number, len(qu)])
+def calculate_w(b, pi, qu):
+    w = np.zeros([len(pi), len(pi)])
     w[0] = np.dot(pi, qu).T
     w[1] = np.dot(b - pi, qu).T
-    for k in range(2, number):
+    for k in range(2, len(pi)):
         w[k] = np.dot(-b, w[k - 1]).T
     return w
 
 
-def calculate_y(x, number):
-    y = np.zeros([number, len(x[0])])
-    for k in range(number):
+def calculate_y(x):
+    y = np.zeros([len(x), len(x)])
+    for k in range(len(x)):
         y[k] = x[k]
         for n in range(k):
             y[k] -= y[n] * gamma(x[k], y[n])
@@ -105,7 +105,7 @@ W3 = np.dot(-B, W2)
 W4 = np.dot(-B, W3)
 W5 = np.dot(-B, W4)
 W6 = np.dot(-B, W5)
-X = calculate_w(B, Pi_matrix, q, len(p))
+X = calculate_w(B, Pi_matrix, q)
 print('W:')
 print_ndarray([W1, W2, W3, W4, W5, W6])
 print()
@@ -125,7 +125,7 @@ print(*y3)
 print(*y4)
 print(*y5)
 print(*y6, '\n')
-Y = calculate_y(X, len(p))
+Y = calculate_y(X)
 print('Y_calculated')
 for elem in Y: print(*elem)
 print()
