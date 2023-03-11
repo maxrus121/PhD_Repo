@@ -455,7 +455,9 @@ def ort(x):
 
 def calc_stab(L2, L4, C, method):
     L3 = L2 + L4
-    D = [copy.deepcopy(L3), copy.deepcopy(L3), copy.deepcopy(L3), copy.deepcopy(L3)]
+    D = []
+    for i in range(len(C)):
+        D += [copy.deepcopy(L3)]
     for k in range(len(C)):
         for h in range(len(C)*2):
             D[k][h][k] = 0
