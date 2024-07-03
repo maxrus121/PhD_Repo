@@ -28,6 +28,7 @@ swap_rows_right - Изменение позиций строк с учетом �
 divide_row_right - Деление строк с учетом правой части
 combine_rows_right - Соединение строк с учетом правой части
 gauss_right - Создание треугольной матрицы с учетом правой части
+calc_stab  - Решение задачи устойчивости
 '''
 
 
@@ -462,18 +463,126 @@ def calc_stab(L2, L4, C, method):
         for h in range(len(C)*2):
             D[k][h][k] = 0
     com_set = product([0, len(C)], repeat=len(C)-1)
-    Z = np.zeros([len(C)*2, len(C)-1])
+    len_Z = 0
+    for i in com_set:
+        len_Z += 1
+    Z = np.zeros([len_Z, len(C)-1])
     ii = 0
+
+
     for i in com_set:
         for j in range(len(i)):
             Z[ii][j] = int(i[j])
         ii += 1
+        print(ii)
     for k in range(len(C)):
         for i in range(len(C)*2):
             y = 0
             for j in range(len(C)):
                 if k == j:
                     D[k][i][j] = 0
+                else:
+                    D[k][i][j] = L3[int(Z[i][y])+k][j]
+                    y += 1
+    for k in range(len(C)):
+        for i in range(len(C)*2):
+            I_sum = 0
+            for j in range(len(C)):
+                I_sum += D[k][i][j]
+            D[k][i][k] = I_sum*(-1)
+    index = [0] * len(C)
+    Pi = np.zeros([len(C), 1])
+    if method == 1:
+        for i in range(len(C)):
+            Pi[i] = 1
+    for m in range(len(C)):
+        Q = np.zeros([len(C), 1])
+        Q[m] = 1
+        #print(Q)
+        next_step = False
+        while next_step != True:
+            L = np.zeros([len(C), len(C)])
+            for k in  range(len(C)):
+                L[k] = D[k][index[k]]
+            M1 = np.zeros([len(L), len(L)])
+            for i in range(len(L)):
+                for j in range(len(L)):
+                    if j == 0:
+                        M1[i][j] = 1
+                    else:
+                        M1[i][j] = -L[i][j-1]
+            solve = np.linalg.solve(M1, Q)
+            G = solve[0]
+            W = np.zeros([len(L)-1, 1])
+            for i in range(len(solve)-1):
+                W[i] = solve[i+1]
+            func_sum = np.zeros([len(L),1])
+            for i in range(len(L)):
+                func_sum[i] = Q[i]
+                for j in range(len(W)):
+                    func_sum[i] += L[i][j]*W[j]
+            all_sum = np.zeros([len(C)*2,1])
+            for k in range(len(C)):
+                for i in range(len(C)*2):
+                    all_sum[i] = Q[k]
+                    for j in range(len(W)):
+                        all_sum[i] += D[k][i][j]*W[j]
+                if method == 1:
+                    index[k] = np.argmin(all_sum)
+                if method == 2:
+                    index[k] = np.argmax(all_sum)
+            if method == 1:
+                if Pi[m] >= G + 0.000000001:
+                    Pi[m] = G
+                    #print('no')
+                    #print(m)
+                    #print(G)
+                    #print(Pi[m])
+                else:
+                    next_step = True
+                    #print('yes')
+                    #print(m)
+                    #print(G)
+                    #print(Pi[m])
+            if method == 2:
+                if Pi[m] <= G - 0.000000001:
+                    Pi[m] = G
+                    #print('no')
+                    #print(m)
+                    #print(G)
+                    #print(Pi[m])
+                else:
+                    next_step = True
+                    #print('yes')
+                    #print(m)
+                    #print(G)
+                    #print(Pi[m])
+    return Pi
+def calc_stab_1(L2, L4, C, method):
+    L3 = L2 + L4
+    D = []
+    com_set = product([0, len(C)], repeat=len(C) - 1)
+    len_Z = 0
+    for i in com_set:
+        len_Z += 1
+
+    Z = np.zeros([len_Z, len(C)-1])
+    ii = 0
+    com_set = product([0, len(C)], repeat=len(C) - 1)
+    D_1 = np.zeros([len_Z, len(C)])
+    D = []
+    for i in range(len(C)):
+        D += [copy.deepcopy(D_1)]
+    for i in com_set:
+        for j in range(len(i)):
+            Z[ii][j] = int(i[j])
+        ii += 1
+    for k in range(len(C)):
+        for i in range(len_Z):
+            y = 0
+            for j in range(len(C)):
+                if k == j:
+                    D[k][i][j] = 0.0
                 else:
                     D[k][i][j] = L3[int(Z[i][y])+k][j]
                     y += 1
